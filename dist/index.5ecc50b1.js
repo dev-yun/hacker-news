@@ -562,20 +562,29 @@ function newsFeedFuc() {
     const newsFeed = getData(NEWS_URL);
     // 배열을 사용하여 li태그들을 다루는 방법
     const newsList = [];
-    newsList.push("<ul>");
+    // 일관성 있는 태그를 만들기 위한 템플릿
+    // {{}}은 마킹하기 위해 표시한 것으로 의미는 없다. (정해진 패턴도 없음)
+    let template = `
+    <div>
+        <h1>Hacker News</h1>
+        <ul>
+            {{__news_feed__}}
+        </ul>
+        <div>
+            <a href="#/page/{{__prev_page__}}">이전 페이지</a>
+            <a href="#/page/{{__next_page__}}">다음 페이지</a>
+        </div>
+    </div>
+  `;
     for(let i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++)newsList.push(`
         <li>
             <a href="#/show/${newsFeed[i].id}">${newsFeed[i].title} (${newsFeed[i].comments_count})</a>
         </li>
     `);
-    newsList.push("</ul>");
-    newsList.push(`
-  <div>
-    <a href='#/page/${store.currentPage > 1 ? store.currentPage - 1 : 1}'>이전 페이지</a>
-    <a href='#/page/${store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage}'>다음 페이지</a>
-  </div>
-  `);
-    container.innerHTML = newsList.join("");
+    template = template.replace("{{__news_feed__}}", newsList.join(""));
+    template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : store.currentPage);
+    template = template.replace("{{__next_page__}}", store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage);
+    container.innerHTML = template;
 }
 function router() {
     const routePath = location.hash;
