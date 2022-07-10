@@ -4,6 +4,7 @@ let NEWS_URL = 'https://api.hnpwa.com/v0/news/1.json';
 let CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
 const store = {
   currentPage: 1,
+  feeds: [],
 };
 
 function getData(url) {
@@ -13,6 +14,15 @@ function getData(url) {
 
   // ajax.send() 이후 response로 JSON값을 받아올 수 있음
   return JSON.parse(ajax.response);
+}
+
+// NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
+function makeFeeds(feeds) {
+  for (let i = 0; i < feeds.length; i++) {
+    feeds[i].read = false;
+  }
+
+  return feeds;
 }
 
 function newsDetail() {
@@ -50,6 +60,13 @@ function newsDetail() {
         </div>
     `;
 
+  for (let i = 0; i < store.feeds.length; i++) {
+    if (store.feeds[i].id === Number(id)) {
+      store.feeds[i].read = true;
+      break;
+    }
+  }
+
   // called : 함수가 호출된 횟수를 기록하는 매개변수
   function makeComment(comments, called = 0) {
     const commentString = [];
@@ -83,9 +100,14 @@ function newsDetail() {
 }
 
 function newsFeedFuc() {
-  const newsFeed = getData(NEWS_URL);
+  let newsFeed = store.feeds;
   // 배열을 사용하여 li태그들을 다루는 방법
   const newsList = [];
+
+  if (newsFeed.length === 0) {
+    newsFeed = store.feeds = makeFeeds(getData(NEWS_URL));
+  }
+
   // 일관성 있는 태그를 만들기 위한 템플릿
   // {{}}은 마킹하기 위해 표시한 것으로 의미는 없다. (정해진 패턴도 없음)
   let template = `
@@ -115,20 +137,28 @@ function newsFeedFuc() {
 
   for (let i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
     newsList.push(`
-        <div class="p-6 bg-white mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
+        <div class="p-6 ${
+          newsFeed[i].read ? 'bg-gray-300' : 'bg-white'
+        } mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
             <div class="flex">
             <div class="flex-auto">
                 <a href="#/show/${newsFeed[i].id}">${newsFeed[i].title}</a>  
             </div>
             <div class="text-center text-sm">
-                <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${newsFeed[i].comments_count}</div>
+                <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${
+                  newsFeed[i].comments_count
+                }</div>
             </div>
             </div>
             <div class="flex mt-3">
             <div class="grid grid-cols-3 text-sm text-gray-500">
                 <div><i class="fas fa-user mr-1"></i>${newsFeed[i].user}</div>
-                <div><i class="fas fa-heart mr-1"></i>${newsFeed[i].points}</div>
-                <div><i class="far fa-clock mr-1"></i>${newsFeed[i].time_ago}</div>
+                <div><i class="fas fa-heart mr-1"></i>${
+                  newsFeed[i].points
+                }</div>
+                <div><i class="far fa-clock mr-1"></i>${
+                  newsFeed[i].time_ago
+                }</div>
             </div>  
             </div>
         </div> 
