@@ -540,29 +540,40 @@ const store = {
     currentPage: 1,
     feeds: []
 };
+function applyApiMixins(targetClass, baseClasses) {
+    baseClasses.forEach((baseClass)=>{
+        Object.getOwnPropertyNames(baseClass.prototype).forEach((name)=>{
+            const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
+            if (descriptor) Object.defineProperty(targetClass.prototype, name, descriptor);
+        });
+    });
+}
 class Api {
-    constructor(url){
-        this.url = url;
-        this.ajax = new XMLHttpRequest();
-    }
-    getRequest() {
+    getRequest(url) {
+        const ajax1 = new XMLHttpRequest();
         // ajax.open(응답방식, 주소, 비동기 boolean값)
-        this.ajax.open("GET", this.url, false);
-        this.ajax.send();
+        ajax1.open("GET", url, false);
+        ajax1.send();
         // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
-        return JSON.parse(this.ajax.response);
+        return JSON.parse(ajax1.response);
     }
 }
-class NewsFeedApi extends Api {
+class NewsFeedApi {
     getData() {
-        return this.getRequest();
+        return this.getRequest(NEWS_URL);
     }
 }
-class NewsDetailApi extends Api {
-    getData() {
-        return this.getRequest();
+class NewsDetailApi {
+    getData(id) {
+        return this.getRequest(CONTENT_URL.replace("@id", id));
     }
 }
+applyApiMixins(NewsFeedApi, [
+    Api
+]);
+applyApiMixins(NewsDetailApi, [
+    Api
+]);
 // NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
 function makeFeeds(feeds) {
     for(let i = 0; i < feeds.length; i++)feeds[i].read = false;
@@ -575,8 +586,8 @@ function updateView(html) {
 function newsDetail() {
     //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
     const id = location.hash.slice(7);
-    const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-    const newsContent = api.getData();
+    const api = new NewsDetailApi();
+    const newsContent = api.getData(id);
     let template = `
         <div class="bg-gray-600 min-h-screen pb-8">
             <div class="bg-white text-xl">
@@ -632,7 +643,7 @@ function makeComment(comments) {
     return commentString.join(" ");
 }
 function newsFeedFuc() {
-    const api = new NewsFeedApi(NEWS_URL);
+    const api = new NewsFeedApi();
     let newsFeed = store.feeds;
     // 배열을 사용하여 li태그들을 다루는 방법
     const newsList = [];

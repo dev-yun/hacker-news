@@ -40,36 +40,46 @@ const store: Store = {
   feeds: [],
 };
 
+function applyApiMixins(targetClass: any, baseClasses: any[]): void{
+  baseClasses.forEach(baseClass => {
+    Object.getOwnPropertyNames(baseClass.prototype).forEach(name => {
+      const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
+
+      if(descriptor){
+        Object.defineProperty(targetClass.prototype, name, descriptor);
+      }
+    });
+  })
+}
+
 class Api {
-  url: string;
-  ajax: XMLHttpRequest;
-
-  constructor(url: string) {
-    this.url = url;
-    this.ajax = new XMLHttpRequest();
-  }
-
-  protected getRequest<AjaxResponse>(): AjaxResponse{
+  getRequest<AjaxResponse>(url: string): AjaxResponse{
+    const ajax = new XMLHttpRequest();
     // ajax.open(응답방식, 주소, 비동기 boolean값)
-    this.ajax.open('GET', this.url, false);
-    this.ajax.send();
+    ajax.open('GET', url, false);
+    ajax.send();
 
     // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
-    return JSON.parse(this.ajax.response);
+    return JSON.parse(ajax.response);
   }
 }
 
-class NewsFeedApi extends Api {
+class NewsFeedApi{
   getData(): NewsFeed[]{
-    return this.getRequest<NewsFeed[]>();
+    return this.getRequest<NewsFeed[]>(NEWS_URL);
   }
 }
 
-class NewsDetailApi extends Api {
-  getData(): NewsDetail{
-    return this.getRequest<NewsDetail>();
+class NewsDetailApi{
+  getData(id: string): NewsDetail{
+    return this.getRequest<NewsDetail>(CONTENT_URL.replace('@id', id));
   }
 }
+
+interface NewsFeedApi extends Api {};
+interface NewsDetailApi extends Api {};
+applyApiMixins(NewsFeedApi, [Api]);
+applyApiMixins(NewsDetailApi, [Api]);
 
 // NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
 function makeFeeds(feeds: NewsFeed[]): NewsFeed[] {
@@ -90,9 +100,9 @@ function updateView(html: string): void{
 function newsDetail(): void {
   //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
   const id = location.hash.slice(7);
-  const api = new NewsDetailApi(CONTENT_URL.replace('@id', id));
+  const api = new NewsDetailApi();
 
-  const newsContent = api.getData();
+  const newsContent = api.getData(id);
 
   let template = `
         <div class="bg-gray-600 min-h-screen pb-8">
@@ -163,10 +173,10 @@ function makeComment(comments: NewsComment[]): string {
 }
 
 function newsFeedFuc():void {
-  const api = new NewsFeedApi(NEWS_URL);
+  const api = new NewsFeedApi();
   let newsFeed: NewsFeed[] = store.feeds;
   // 배열을 사용하여 li태그들을 다루는 방법
-  const newsList = [];
+  const newsList: string[] = [];
 
   if (newsFeed.length === 0) {
     newsFeed = store.feeds = makeFeeds(api.getData());
