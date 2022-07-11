@@ -1,34 +1,34 @@
-type Store = {
+interface Store {
   currentPage : number;
   // 배열만 타입으로 지정하면 배열내에 어떤 값이 들어갈지 알 수 없으니 명확히 타입을 명시하는 것이 좋다.
   feeds : NewsFeed[];
 }
 
-type News = {
-  id : number;
-  comments_count : number;
-  title : string;
-  time_ago : string;
-  points : number;
-  url : string;
-  user : string;  
-  domain : string;
-  time : number;
-  type : string;
+interface News {
+  readonly id : number;
+  readonly comments_count : number;
+  readonly title : string;
+  readonly time_ago : string;
+  readonly points : number;
+  readonly url : string;
+  readonly user : string;  
+  readonly domain : string;
+  readonly time : number;
+  readonly type : string;
 }
 
-type NewsFeed = News & {
+interface NewsFeed extends News {
   // ?는 있을때도 있고 없을때도 있다는 optional형식을 의미
   read? : boolean;
 }
 
-type NewsDetail = News & {
-  comments : NewsComment[];
-  content : string;
+interface NewsDetail extends News {
+  readonly comments : NewsComment[];
+  readonly content : string;
 }
 
-type NewsComment = NewsDetail & {
-  level : number;
+interface NewsComment extends NewsDetail {
+  readonly level : number;
 }
 
 const container: HTMLElement | null = document.getElementById('root');
