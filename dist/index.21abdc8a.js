@@ -552,6 +552,10 @@ function makeFeeds(feeds) {
     for(let i = 0; i < feeds.length; i++)feeds[i].read = false;
     return feeds;
 }
+function updateView(html) {
+    if (container) container.innerHTML = html;
+    else console.error("\uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108\uAC00 \uC5C6\uC5B4 UI\uB97C \uB9CC\uB4E4\uC9C0 \uBABB\uD569\uB2C8\uB2E4.");
+}
 function newsDetail() {
     //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
     const id = location.hash.slice(7);
@@ -608,7 +612,8 @@ function newsDetail() {
         }
         return commentString.join(" ");
     }
-    container.innerHTML = template.replace("{{__comments__}}", makeComment(newsContent.comments));
+    template = template.replace("{{__comments__}}", makeComment(newsContent.comments));
+    updateView(template);
 }
 function newsFeedFuc() {
     let newsFeed = store.feeds;
@@ -663,7 +668,7 @@ function newsFeedFuc() {
     template = template.replace("{{__news_feed__}}", newsList.join(""));
     template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : store.currentPage);
     template = template.replace("{{__next_page__}}", store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage);
-    container.innerHTML = template;
+    updateView(template);
 }
 function router() {
     const routePath = location.hash;

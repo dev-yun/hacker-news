@@ -1,8 +1,26 @@
-const container = document.getElementById('root');
-const ajax = new XMLHttpRequest();
+type Store = {
+  currentPage : number;
+  // 배열만 타입으로 지정하면 배열내에 어떤 값이 들어갈지 알 수 없으니 명확히 타입을 명시하는 것이 좋다.
+  feeds : NewsFeed[];
+}
+
+type NewsFeed = {
+  id : number;
+  comments_count : number;
+  title : string;
+  time_ago : string;
+  points : number;
+  url : string;
+  user : string;  
+  // ?는 있을때도 있고 없을때도 있다는 optional형식을 의미
+  read? : boolean;
+}
+
+const container: HTMLElement | null = document.getElementById('root');
+const ajax: XMLHttpRequest = new XMLHttpRequest();
 const NEWS_URL = 'https://api.hnpwa.com/v0/news/1.json';
 const CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
-const store = {
+const store: Store = {
   currentPage: 1,
   feeds: [],
 };
@@ -21,8 +39,15 @@ function makeFeeds(feeds) {
   for (let i = 0; i < feeds.length; i++) {
     feeds[i].read = false;
   }
-
   return feeds;
+}
+
+function updateView(html){
+  if(container){
+    container.innerHTML = html;
+  }else{
+    console.error("최상위 컨테이너가 없어 UI를 만들지 못합니다.")
+  }
 }
 
 function newsDetail() {
@@ -92,15 +117,16 @@ function newsDetail() {
 
     return commentString.join(' ');
   }
-
-  container.innerHTML = template.replace(
+  template = template.replace(
     '{{__comments__}}',
     makeComment(newsContent.comments)
   );
+
+  updateView(template);
 }
 
 function newsFeedFuc() {
-  let newsFeed = store.feeds;
+  let newsFeed: NewsFeed[] = store.feeds;
   // 배열을 사용하여 li태그들을 다루는 방법
   const newsList = [];
 
@@ -177,7 +203,7 @@ function newsFeedFuc() {
       : store.currentPage
   );
 
-  container.innerHTML = template;
+  updateView(template);
 }
 
 function router() {
