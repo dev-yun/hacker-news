@@ -40,13 +40,35 @@ const store: Store = {
   feeds: [],
 };
 
-function getData<AjaxResponse>(url: string): AjaxResponse{
-  // ajax.open(응답방식, 주소, 비동기 boolean값)
-  ajax.open('GET', url, false);
-  ajax.send();
+class Api {
+  url: string;
+  ajax: XMLHttpRequest;
 
-  // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
-  return JSON.parse(ajax.response);
+  constructor(url: string) {
+    this.url = url;
+    this.ajax = new XMLHttpRequest();
+  }
+
+  protected getRequest<AjaxResponse>(): AjaxResponse{
+    // ajax.open(응답방식, 주소, 비동기 boolean값)
+    this.ajax.open('GET', this.url, false);
+    this.ajax.send();
+
+    // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
+    return JSON.parse(this.ajax.response);
+  }
+}
+
+class NewsFeedApi extends Api {
+  getData(): NewsFeed[]{
+    return this.getRequest<NewsFeed[]>();
+  }
+}
+
+class NewsDetailApi extends Api {
+  getData(): NewsDetail{
+    return this.getRequest<NewsDetail>();
+  }
 }
 
 // NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
@@ -68,8 +90,9 @@ function updateView(html: string): void{
 function newsDetail(): void {
   //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
   const id = location.hash.slice(7);
+  const api = new NewsDetailApi(CONTENT_URL.replace('@id', id));
 
-  const newsContent = getData<NewsDetail>(CONTENT_URL.replace('@id', id));
+  const newsContent = api.getData();
 
   let template = `
         <div class="bg-gray-600 min-h-screen pb-8">
@@ -140,12 +163,13 @@ function makeComment(comments: NewsComment[]): string {
 }
 
 function newsFeedFuc():void {
+  const api = new NewsFeedApi(NEWS_URL);
   let newsFeed: NewsFeed[] = store.feeds;
   // 배열을 사용하여 li태그들을 다루는 방법
   const newsList = [];
 
   if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeFeeds(getData<NewsDetail[]>(NEWS_URL));
+    newsFeed = store.feeds = makeFeeds(api.getData());
   }
 
   // 일관성 있는 태그를 만들기 위한 템플릿
