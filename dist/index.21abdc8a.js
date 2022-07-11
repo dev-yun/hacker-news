@@ -544,7 +544,7 @@ function getData(url) {
     // ajax.open(응답방식, 주소, 비동기 boolean값)
     ajax.open("GET", url, false);
     ajax.send();
-    // ajax.send() 이후 response로 JSON값을 받아올 수 있음
+    // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
     return JSON.parse(ajax.response);
 }
 // NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
@@ -588,32 +588,31 @@ function newsDetail() {
             </div>
         </div>
     `;
-    for(let i1 = 0; i1 < store.feeds.length; i1++)if (store.feeds[i1].id === Number(id)) {
-        store.feeds[i1].read = true;
+    for(let i = 0; i < store.feeds.length; i++)if (store.feeds[i].id === Number(id)) {
+        store.feeds[i].read = true;
         break;
     }
-    // called : 함수가 호출된 횟수를 기록하는 매개변수
-    function makeComment(comments, called = 0) {
-        const commentString = [];
-        for(let i = 0; i < comments.length; i++){
-            commentString.push(`
-          <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
-            <div style="padding-left : ${called * 40}px;" class="mt-4">
-                <div class="text-gray-400">
-                    <i class="fa fa-sort-up mr-2"></i>
-                    <strong>${comments[i].user}</strong> 
-                    ${comments[i].time_ago}
-                </div>
-                <p class="text-gray-700">${comments[i].content}</p>
-            </div>
-          </div>      
-      `);
-            if (comments[i].comments.length > 0) commentString.push(makeComment(comments[i].comments, called + 1));
-        }
-        return commentString.join(" ");
+    updateView(template.replace("{{__comments__}}", makeComment(newsContent.comments)));
+}
+function makeComment(comments) {
+    const commentString = [];
+    for(let i = 0; i < comments.length; i++){
+        const comment = comments[i];
+        commentString.push(`
+        <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
+          <div style="padding-left : ${comment.level * 40}px;" class="mt-4">
+              <div class="text-gray-400">
+                  <i class="fa fa-sort-up mr-2"></i>
+                  <strong>${comment.user}</strong> 
+                  ${comment.time_ago}
+              </div>
+              <p class="text-gray-700">${comment.content}</p>
+          </div>
+        </div>      
+    `);
+        if (comment.comments.length > 0) commentString.push(makeComment(comment.comments));
     }
-    template = template.replace("{{__comments__}}", makeComment(newsContent.comments));
-    updateView(template);
+    return commentString.join(" ");
 }
 function newsFeedFuc() {
     let newsFeed = store.feeds;
@@ -666,8 +665,8 @@ function newsFeedFuc() {
         </div> 
     `);
     template = template.replace("{{__news_feed__}}", newsList.join(""));
-    template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : store.currentPage);
-    template = template.replace("{{__next_page__}}", store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage);
+    template = template.replace("{{__prev_page__}}", String(store.currentPage > 1 ? store.currentPage - 1 : store.currentPage));
+    template = template.replace("{{__next_page__}}", String(store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage));
     updateView(template);
 }
 function router() {

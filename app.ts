@@ -4,7 +4,7 @@ type Store = {
   feeds : NewsFeed[];
 }
 
-type NewsFeed = {
+type News = {
   id : number;
   comments_count : number;
   title : string;
@@ -12,8 +12,23 @@ type NewsFeed = {
   points : number;
   url : string;
   user : string;  
+  domain : string;
+  time : number;
+  type : string;
+}
+
+type NewsFeed = News & {
   // ?는 있을때도 있고 없을때도 있다는 optional형식을 의미
   read? : boolean;
+}
+
+type NewsDetail = News & {
+  comments : NewsComment[];
+  content : string;
+}
+
+type NewsComment = NewsDetail & {
+  level : number;
 }
 
 const container: HTMLElement | null = document.getElementById('root');
@@ -25,24 +40,24 @@ const store: Store = {
   feeds: [],
 };
 
-function getData(url) {
+function getData<AjaxResponse>(url: string): AjaxResponse{
   // ajax.open(응답방식, 주소, 비동기 boolean값)
   ajax.open('GET', url, false);
   ajax.send();
 
-  // ajax.send() 이후 response로 JSON값을 받아올 수 있음
+  // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
   return JSON.parse(ajax.response);
 }
 
 // NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
-function makeFeeds(feeds) {
+function makeFeeds(feeds: NewsFeed[]): NewsFeed[] {
   for (let i = 0; i < feeds.length; i++) {
     feeds[i].read = false;
   }
   return feeds;
 }
 
-function updateView(html){
+function updateView(html: string): void{
   if(container){
     container.innerHTML = html;
   }else{
@@ -50,11 +65,11 @@ function updateView(html){
   }
 }
 
-function newsDetail() {
+function newsDetail(): void {
   //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
   const id = location.hash.slice(7);
 
-  const newsContent = getData(CONTENT_URL.replace('@id', id));
+  const newsContent = getData<NewsDetail>(CONTENT_URL.replace('@id', id));
 
   let template = `
         <div class="bg-gray-600 min-h-screen pb-8">
@@ -92,46 +107,45 @@ function newsDetail() {
     }
   }
 
-  // called : 함수가 호출된 횟수를 기록하는 매개변수
-  function makeComment(comments, called = 0) {
-    const commentString = [];
-
-    for (let i = 0; i < comments.length; i++) {
-      commentString.push(`
-          <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
-            <div style="padding-left : ${called * 40}px;" class="mt-4">
-                <div class="text-gray-400">
-                    <i class="fa fa-sort-up mr-2"></i>
-                    <strong>${comments[i].user}</strong> 
-                    ${comments[i].time_ago}
-                </div>
-                <p class="text-gray-700">${comments[i].content}</p>
-            </div>
-          </div>      
-      `);
-
-      if (comments[i].comments.length > 0) {
-        commentString.push(makeComment(comments[i].comments, called + 1));
-      }
-    }
-
-    return commentString.join(' ');
-  }
-  template = template.replace(
+  updateView(template.replace(
     '{{__comments__}}',
     makeComment(newsContent.comments)
-  );
-
-  updateView(template);
+  ));
 }
 
-function newsFeedFuc() {
+function makeComment(comments: NewsComment[]): string {
+  const commentString = [];
+
+  for (let i = 0; i < comments.length; i++) {
+    const comment: NewsComment = comments[i]
+    commentString.push(`
+        <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
+          <div style="padding-left : ${comment.level * 40}px;" class="mt-4">
+              <div class="text-gray-400">
+                  <i class="fa fa-sort-up mr-2"></i>
+                  <strong>${comment.user}</strong> 
+                  ${comment.time_ago}
+              </div>
+              <p class="text-gray-700">${comment.content}</p>
+          </div>
+        </div>      
+    `);
+
+    if (comment.comments.length > 0) {
+      commentString.push(makeComment(comment.comments));
+    }
+  }
+
+  return commentString.join(' ');
+}
+
+function newsFeedFuc():void {
   let newsFeed: NewsFeed[] = store.feeds;
   // 배열을 사용하여 li태그들을 다루는 방법
   const newsList = [];
 
   if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeFeeds(getData(NEWS_URL));
+    newsFeed = store.feeds = makeFeeds(getData<NewsDetail[]>(NEWS_URL));
   }
 
   // 일관성 있는 태그를 만들기 위한 템플릿
@@ -194,19 +208,19 @@ function newsFeedFuc() {
   template = template.replace('{{__news_feed__}}', newsList.join(''));
   template = template.replace(
     '{{__prev_page__}}',
-    store.currentPage > 1 ? store.currentPage - 1 : store.currentPage
+    String(store.currentPage > 1 ? store.currentPage - 1 : store.currentPage)
   );
   template = template.replace(
     '{{__next_page__}}',
-    store.currentPage * 10 < newsFeed.length
+    String(store.currentPage * 10 < newsFeed.length
       ? store.currentPage + 1
-      : store.currentPage
+      : store.currentPage)
   );
 
   updateView(template);
 }
 
-function router() {
+function router(): void {
   const routePath = location.hash;
 
   // location.hash에 '#'만 들어있으면 빈 문자열을 반환
