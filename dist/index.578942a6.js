@@ -142,14 +142,14 @@
       this[globalName] = mainExports;
     }
   }
-})({"2wBs7":[function(require,module,exports) {
+})({"hfz1s":[function(require,module,exports) {
 "use strict";
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "4f6742a521abdc8a";
+module.bundle.HMR_BUNDLE_ID = "cfe052e4578942a6";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
   HMRAsset,
@@ -531,186 +531,332 @@ function hmrAcceptRun(bundle, id) {
     acceptedAssets[id] = true;
 }
 
-},{}],"JoPGm":[function(require,module,exports) {
-const container = document.getElementById("root");
-const ajax = new XMLHttpRequest();
-const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
-const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
+},{}],"87rFe":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _router = require("./core/router");
+var _routerDefault = parcelHelpers.interopDefault(_router);
+var _page = require("./page");
 const store = {
     currentPage: 1,
     feeds: []
 };
-function applyApiMixins(targetClass, baseClasses) {
-    baseClasses.forEach((baseClass)=>{
-        Object.getOwnPropertyNames(baseClass.prototype).forEach((name)=>{
-            const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
-            if (descriptor) Object.defineProperty(targetClass.prototype, name, descriptor);
+window.store = store;
+const router = new (0, _routerDefault.default)();
+const newsFeedView = new (0, _page.NewsFeedView)("root");
+const newsDetailView = new (0, _page.NewsDetailView)("root");
+router.setDefaultPage(newsFeedView);
+router.addRoutePath("/page/", newsFeedView, /page\/(\d+)/);
+router.addRoutePath("/show/", newsDetailView, /show\/(\d+)/);
+router.go();
+
+},{"./core/router":"4ojTc","./page":"2jUeu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4ojTc":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+class Router {
+    constructor(){
+        window.addEventListener("hashchange", this.route.bind(this));
+        this.defaultRoute = null;
+        this.routeTable = [];
+    }
+    go = ()=>{
+        this.route();
+    };
+    setDefaultPage(page, params = null) {
+        this.defaultRoute = {
+            path: "",
+            page,
+            params
+        };
+    }
+    addRoutePath(path, page, params = null) {
+        this.routeTable.push({
+            path,
+            page,
+            params
+        });
+    }
+    route() {
+        const routePath = location.hash;
+        if (routePath === "" && this.defaultRoute) {
+            this.defaultRoute.page.render();
+            return;
+        }
+        for (const routeInfo of this.routeTable)if (routePath.indexOf(routeInfo.path) >= 0) {
+            if (routeInfo.params) {
+                const parseParams = routePath.match(routeInfo.params);
+                if (parseParams) routeInfo.page.render.apply(null, [
+                    parseParams[1]
+                ]);
+            } else routeInfo.page.render();
+            return;
+        }
+    }
+}
+exports.default = Router;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
         });
     });
-}
-class Api {
-    getRequest(url) {
-        const ajax1 = new XMLHttpRequest();
-        // ajax.open(응답방식, 주소, 비동기 boolean값)
-        ajax1.open("GET", url, false);
-        ajax1.send();
-        // ajax.send()로 받아온 JSON 파일을 객체로 변환하여 반환
-        return JSON.parse(ajax1.response);
-    }
-}
-class NewsFeedApi {
-    getData() {
-        return this.getRequest(NEWS_URL);
-    }
-}
-class NewsDetailApi {
-    getData(id) {
-        return this.getRequest(CONTENT_URL.replace("@id", id));
-    }
-}
-applyApiMixins(NewsFeedApi, [
-    Api
-]);
-applyApiMixins(NewsDetailApi, [
-    Api
-]);
-// NEWS_URL로 받아온 데이터에 read라는 속성을 추가하고 false로 초기화
-function makeFeeds(feeds) {
-    for(let i = 0; i < feeds.length; i++)feeds[i].read = false;
-    return feeds;
-}
-function updateView(html) {
-    if (container) container.innerHTML = html;
-    else console.error("\uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108\uAC00 \uC5C6\uC5B4 UI\uB97C \uB9CC\uB4E4\uC9C0 \uBABB\uD569\uB2C8\uB2E4.");
-}
-function newsDetail() {
-    //location : 브라우저가 기본으로 제공하는 객체 (주소와 관련된 다양한 정보 제공)
-    const id = location.hash.slice(7);
-    const api = new NewsDetailApi();
-    const newsContent = api.getData(id);
-    let template = `
-        <div class="bg-gray-600 min-h-screen pb-8">
-            <div class="bg-white text-xl">
-                <div class="mx-auto px-4">
-                    <div class="flex justify-between items-center py-6">
-                        <div class="flex justify-start">
-                        <h1 class="font-extrabold">Hacker News</h1>
-                        </div>
-                        <div class="items-center justify-end">
-                        <a href="#/page/${store.currentPage}" class="text-gray-500">
-                            <i class="fa fa-times"></i>
-                        </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
 
-            <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-                <h1>${newsContent.title}</h1>
-                <div class="text-gray-400 h-20">
-                    ${newsContent.content}
-                </div>
+},{}],"2jUeu":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "NewsDetailView", ()=>(0, _newsDetailViewDefault.default));
+parcelHelpers.export(exports, "NewsFeedView", ()=>(0, _newsFeedViewDefault.default));
+var _newsDetailView = require("./news-detail-view");
+var _newsDetailViewDefault = parcelHelpers.interopDefault(_newsDetailView);
+var _newsFeedView = require("./news-feed-view");
+var _newsFeedViewDefault = parcelHelpers.interopDefault(_newsFeedView);
 
-                {{__comments__}}
-
-            </div>
-        </div>
-    `;
-    for(let i = 0; i < store.feeds.length; i++)if (store.feeds[i].id === Number(id)) {
-        store.feeds[i].read = true;
-        break;
-    }
-    updateView(template.replace("{{__comments__}}", makeComment(newsContent.comments)));
-}
-function makeComment(comments) {
-    const commentString = [];
-    for(let i = 0; i < comments.length; i++){
-        const comment = comments[i];
-        commentString.push(`
-        <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
-          <div style="padding-left : ${comment.level * 40}px;" class="mt-4">
-              <div class="text-gray-400">
-                  <i class="fa fa-sort-up mr-2"></i>
-                  <strong>${comment.user}</strong> 
-                  ${comment.time_ago}
+},{"./news-detail-view":"i0Ty6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./news-feed-view":"9gWIR"}],"i0Ty6":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _view = require("../core/view");
+var _viewDefault = parcelHelpers.interopDefault(_view);
+var _api = require("../core/api");
+var _config = require("../config");
+const template = `
+          <div class="bg-gray-600 min-h-screen pb-8">
+              <div class="bg-white text-xl">
+                  <div class="mx-auto px-4">
+                      <div class="flex justify-between items-center py-6">
+                          <div class="flex justify-start">
+                          <h1 class="font-extrabold"><a href="">Hacker News</a></h1>
+                          </div>
+                          <div class="items-center justify-end">
+                          <a href="#/page/{{__currentPage__}}" class="text-gray-500">
+                              <i class="fa fa-times"></i>
+                          </a>
+                          </div>
+                      </div>
+                  </div>
               </div>
-              <p class="text-gray-700">${comment.content}</p>
+
+              <div class="h-full border rounded-xl bg-white m-6 p-4 ">
+                  <h1>{{__title__}}</h1>
+                  <div class="text-gray-400 h-20">
+                      {{__content__}}
+                  </div>
+
+                  {{__comments__}}
+
+              </div>
           </div>
-        </div>      
-    `);
-        if (comment.comments.length > 0) commentString.push(makeComment(comment.comments));
+      `;
+class NewsDetailView extends (0, _viewDefault.default) {
+    constructor(containerId){
+        super(containerId, template);
     }
-    return commentString.join(" ");
+    render = (id)=>{
+        const api = new (0, _api.NewsDetailApi)((0, _config.CONTENT_URL).replace("@id", id));
+        for(let i = 0; i < window.store.feeds.length; i++)if (window.store.feeds[i].id === Number(id)) {
+            window.store.feeds[i].read = true;
+            break;
+        }
+        const newsDetail = api.getData();
+        this.setTemplateData("currentPage", window.store.currentPage.toString());
+        this.setTemplateData("title", newsDetail.title);
+        this.setTemplateData("content", newsDetail.content);
+        this.setTemplateData("comments", this.makeComment(newsDetail.comments));
+        this.updateView();
+    };
+    makeComment(comments) {
+        for(let i = 0; i < comments.length; i++){
+            const comment = comments[i];
+            this.addHtml(`
+          <div class="p-6 bg-gray-200 mt-6 rounded-lg shadow-md transition-colors duration-500">
+            <div style="padding-left : ${comment.level * 40}px;" class="mt-4">
+                <div class="text-gray-400">
+                    <i class="fa fa-sort-up mr-2"></i>
+                    <strong>${comment.user}</strong> 
+                    ${comment.time_ago}
+                </div>
+                <p class="text-gray-700">${comment.content}</p>
+            </div>
+          </div>      
+      `);
+            if (comment.comments.length > 0) this.addHtml(this.makeComment(comment.comments));
+        }
+        return this.getHtml();
+    }
 }
-function newsFeedFuc() {
-    const api = new NewsFeedApi();
-    let newsFeed = store.feeds;
-    // 배열을 사용하여 li태그들을 다루는 방법
-    const newsList = [];
-    if (newsFeed.length === 0) newsFeed = store.feeds = makeFeeds(api.getData());
-    // 일관성 있는 태그를 만들기 위한 템플릿
-    // {{}}은 마킹하기 위해 표시한 것으로 의미는 없다. (정해진 패턴도 없음)
-    let template = `
+exports.default = NewsDetailView;
+
+},{"../core/view":"lwaw2","../core/api":"gAysr","../config":"4NUTD","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lwaw2":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+class View {
+    constructor(containerId, template){
+        const conatinerElement = document.getElementById(containerId);
+        if (!conatinerElement) throw "\uCD5C\uC0C1\uC704 \uCEE8\uD14C\uC774\uB108\uAC00 \uC5C6\uC5B4 UI\uB97C \uC9C4\uD589\uD558\uC9C0 \uBABB\uD569\uB2C8\uB2E4.";
+        this.container = conatinerElement;
+        this.template = template;
+        this.renderTemplate = template;
+        this.htmlList = [];
+    }
+    updateView() {
+        this.container.innerHTML = this.renderTemplate;
+        this.renderTemplate = this.template;
+    }
+    addHtml(htmlString) {
+        this.htmlList.push(htmlString);
+    }
+    getHtml() {
+        const snapshot = this.htmlList.join("");
+        this.clearHtmlList();
+        return snapshot;
+    }
+    setTemplateData(key, value) {
+        this.renderTemplate = this.renderTemplate.replace(`{{__${key}__}}`, value);
+    }
+    clearHtmlList() {
+        this.htmlList = [];
+    }
+}
+exports.default = View;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gAysr":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "NewsFeedApi", ()=>NewsFeedApi);
+parcelHelpers.export(exports, "NewsDetailApi", ()=>NewsDetailApi);
+class Api {
+    constructor(url){
+        this.ajax = new XMLHttpRequest();
+        this.url = url;
+    }
+    getRequest() {
+        this.ajax.open("GET", this.url, false);
+        this.ajax.send();
+        return JSON.parse(this.ajax.response);
+    }
+}
+exports.default = Api;
+class NewsFeedApi extends Api {
+    constructor(url){
+        super(url);
+    }
+    getData() {
+        return this.getRequest();
+    }
+}
+class NewsDetailApi extends Api {
+    constructor(url){
+        super(url);
+    }
+    getData() {
+        return this.getRequest();
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4NUTD":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
+parcelHelpers.export(exports, "CONTENT_URL", ()=>CONTENT_URL);
+const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
+const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9gWIR":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _view = require("../core/view");
+var _viewDefault = parcelHelpers.interopDefault(_view);
+var _api = require("../core/api");
+var _config = require("../config");
+const template = `
     <div class="bg-gray-600 min-h-screen">
         <div class="bg-white text-xl">
-            <div class="mx-auto px-4">
-                <div class="flex justify-between items-center py-6">
-                    <div class="flex justify-start">
-                        <h1 class="font-extrabold">Hacker News</h1>
-                    </div>
-                    <div class="items-center justify-end">
-                        <a href="#/page/{{__prev_page__}}" class="text-gray-500">
-                            Previous
-                        </a>
-                        <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
-                            Next
-                        </a>
-                    </div>
-                </div> 
-            </div>
-        </div>
-        <div class="p-4 text-2xl text-gray-700">
+                <div class="mx-auto px-4">
+                  <div class="flex justify-between items-center py-6">
+                      <div class="flex justify-start">
+                          <h1 class="font-extrabold"><a href="">Hacker News</a></h1>
+                      </div>
+                      <div class="items-center justify-end">
+                          <a href="#/page/{{__prev_page__}}" class="text-gray-500">
+                              Previous
+                          </a>
+                          <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
+                              Next
+                          </a>
+                      </div>
+                  </div> 
+                <div class="p-4 text-2xl text-gray-700">
             {{__news_feed__}}        
         </div>
     </div>
-  `;
-    for(let i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++)newsList.push(`
-        <div class="p-6 ${newsFeed[i].read ? "bg-gray-300" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
-            <div class="flex">
+    `;
+class NewsFeedView extends (0, _viewDefault.default) {
+    constructor(containerId){
+        super(containerId, template);
+        this.feeds = window.store.feeds;
+        this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL));
+        if (window.store.feeds.length === 0) {
+            this.feeds = window.store.feeds = this.api.getData();
+            this.makeFeeds();
+        }
+    }
+    render = (page = "1")=>{
+        window.store.currentPage = Number(page);
+        for(let i = (window.store.currentPage - 1) * 10; i < window.store.currentPage * 10; i++){
+            const { id , title , comments_count , user , points , time_ago , read  } = this.feeds[i];
+            this.addHtml(`
+      <div class="p-6 ${read ? "bg-gray-300" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
+          <div class="flex">
             <div class="flex-auto">
-                <a href="#/show/${newsFeed[i].id}">${newsFeed[i].title}</a>  
+              <a href="#/show/${id}">${title}</a>  
             </div>
             <div class="text-center text-sm">
-                <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${newsFeed[i].comments_count}</div>
+              <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${comments_count}</div>
             </div>
-            </div>
-            <div class="flex mt-3">
+          </div>
+          <div class="flex mt-3">
             <div class="grid grid-cols-3 text-sm text-gray-500">
-                <div><i class="fas fa-user mr-1"></i>${newsFeed[i].user}</div>
-                <div><i class="fas fa-heart mr-1"></i>${newsFeed[i].points}</div>
-                <div><i class="far fa-clock mr-1"></i>${newsFeed[i].time_ago}</div>
+              <div><i class="fas fa-user mr-1"></i>${user}</div>
+              <div><i class="fas fa-heart mr-1"></i>${points}</div>
+              <div><i class="far fa-clock mr-1"></i>${time_ago}</div>
             </div>  
-            </div>
-        </div> 
-    `);
-    template = template.replace("{{__news_feed__}}", newsList.join(""));
-    template = template.replace("{{__prev_page__}}", String(store.currentPage > 1 ? store.currentPage - 1 : store.currentPage));
-    template = template.replace("{{__next_page__}}", String(store.currentPage * 10 < newsFeed.length ? store.currentPage + 1 : store.currentPage));
-    updateView(template);
+          </div>
+        </div>    
+      `);
+        }
+        this.setTemplateData("news_feed", this.getHtml());
+        this.setTemplateData("prev_page", String(window.store.currentPage > 1 ? window.store.currentPage - 1 : 1));
+        this.setTemplateData("next_page", String(window.store.currentPage + 1));
+        this.updateView();
+    };
+    makeFeeds() {
+        for(let i = 0; i < this.feeds.length; i++)this.feeds[i].read = false;
+    }
 }
-function router() {
-    const routePath = location.hash;
-    // location.hash에 '#'만 들어있으면 빈 문자열을 반환
-    if (routePath === "") newsFeedFuc();
-    else if (routePath.indexOf("#/page/") >= 0) {
-        store.currentPage = Number(routePath.slice(7));
-        newsFeedFuc();
-    } else newsDetail();
-}
-// 페이지 내의 hash(#)값(주소)이 변하면 실행되는 함수
-window.addEventListener("hashchange", router);
-router();
+exports.default = NewsFeedView;
 
-},{}]},["2wBs7","JoPGm"], "JoPGm", "parcelRequire94c2")
+},{"../core/view":"lwaw2","../core/api":"gAysr","../config":"4NUTD","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["hfz1s","87rFe"], "87rFe", "parcelRequire94c2")
 
-//# sourceMappingURL=index.21abdc8a.js.map
+//# sourceMappingURL=index.578942a6.js.map
