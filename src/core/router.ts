@@ -1,5 +1,6 @@
 import { RouteInfo } from '../types';
 import View from './view';
+
 export default class Router {
   defaultRoute: RouteInfo | null;
   routeTable: RouteInfo[];
